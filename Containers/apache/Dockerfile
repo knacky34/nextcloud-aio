@@ -1,12 +1,6 @@
-FROM caddy:2.6.4-alpine as caddy
-
 FROM httpd:2.4.57-alpine3.17
 
-COPY --from=caddy /usr/bin/caddy /usr/bin/caddy
-
-COPY --chown=33:33 Caddyfile /Caddyfile
 COPY --chmod=664 nextcloud.conf /usr/local/apache2/conf/nextcloud.conf
-COPY --chmod=664 supervisord.conf /supervisord.conf
 COPY --chmod=775 start.sh /start.sh
 COPY --chmod=775 healthcheck.sh /healthcheck.sh
 
@@ -25,7 +19,6 @@ RUN set -ex; \
     \
     apk add --no-cache \
         bash \
-        supervisor \
         tzdata \
         ca-certificates \
         openssl \
@@ -55,11 +48,6 @@ RUN set -ex; \
     mkdir -p /var/www; \
     chown -R www-data:www-data /var/www; \
     \
-    mkdir /var/log/supervisord; \
-    mkdir /var/run/supervisord; \
-    chown www-data:www-data /var/run/supervisord; \
-    chown www-data:www-data /var/log/supervisord; \
-    \
     chown -R www-data:www-data /usr/local/apache2; \
     chmod +r -R /usr/local/apache2; \
     \
@@ -68,7 +56,6 @@ RUN set -ex; \
 USER www-data
 
 ENTRYPOINT ["/start.sh"]
-CMD ["/usr/bin/supervisord", "-c", "/supervisord.conf"]
 
 HEALTHCHECK CMD /healthcheck.sh
 LABEL com.centurylinklabs.watchtower.monitor-only="true"
